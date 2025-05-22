@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Kafka Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            margin: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 2.2em;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+
+        .kafka-architecture {
+            position: relative;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+            border-radius: 20px;
+            padding: 50px;
+            margin: 30px 0;
+            min-height: 800px;
+            overflow: hidden;
+            border: 3px solid #4a90e2;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.7;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .cloud1 { width: 100px; height: 40px; top: 20px; left: 10%; }
+        .cloud2 { width: 120px; height: 50px; top: 30px; right: 15%; animation-delay: -2s; }
+        .cloud3 { width: 80px; height: 30px; top: 60px; left: 70%; animation-delay: -4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .kafka-cluster {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%);
+            background: #2c3e50;
+            width: 400px;
+            height: 280px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            border: 4px solid #34495e;
+        }
+
+        .cluster-header {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 11px 11px 0 0;
+        }
+
+        .brokers-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            height: calc(100% - 60px);
+        }
+
+        .broker {
+            background: #3498db;
+            width: 100px;
+            height: 180px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #2980b9;
+        }
+
+        .broker:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .broker-label {
+            background: #2980b9;
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px 8px 0 0;
+            font-size: 12px;
+        }
+
+        .topics-in-broker {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .topic {
+            background: #e74c3c;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .topic:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .topic.active {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .partitions {
+            display: flex;
+            gap: 2px;
+            height: 100%;
+        }
+
+        .partition {
+            flex: 1;
+            background: #f39c12;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .partition::after {
+            content: attr(data-messages);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .producer {
+            position: absolute;
+            left: 80px;
+            top: 150px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border: 4px solid #c0392b;
+        }
+
+        .consumer-group {
+            position: absolute;
+            right: 80px;
+            top: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .consumer {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border: 3px solid #229954;
+        }
+
+        .producer:hover, .consumer:hover {
+            transform: scale(1.1);
+        }
+
+        .message {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            opacity: 0;
+            transition: all 0.8s ease;
+            border: 2px solid #e67e22;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .message.animate {
+            opacity: 1;
+        }
+
+        .zookeeper {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #8e44ad;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-weight: bold;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .concept-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #4a90e2;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .concept-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .concept-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 28px;
+            color: white;
+        }
+
+        .concept-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .concept-desc {
+            color: #5a6c7d;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .concept-example {
+            background: rgba(74, 144, 226, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            font-style: italic;
+            color: #4a90e2;
+            border-left: 3px solid #4a90e2;
+        }
+
+        .kafka-streams-demo {
+            background: linear-gradient(135deg, #e8f4fd, #d6eaff);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            border: 3px solid #4a90e2;
+        }
+
+        .streams-title {
+            text-align: center;
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .stream-topology {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stream-node {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 120px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .stream-node:hover {
+            transform: scale(1.05);
+        }
+
+        .stream-arrow {
+            font-size: 30px;
+            color: #4a90e2;
+            animation: flow 2s infinite;
+        }
+
+        @keyframes flow {
+            0%, 100% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(10px) scale(1.2); }
+        }
+
+        .data-flow {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .stream-node.processing .data-flow {
+            opacity: 1;
+            animation: dataMove 1s infinite;
+        }
+
+        @keyframes dataMove {
+            0% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+
+        .advanced-concepts {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+        }
+
+        .code-example {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .use-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .use-case {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-top: 4px solid #4a90e2;
+        }
+
+        .log-viewer {
+            background: #2c3e50;
+            color: #2ecc71;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            height: 200px;
+            overflow-y: auto;
+            border: 2px solid #34495e;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .kafka-architecture {
+                padding: 20px;
+                min-height: 600px;
+            }
+            
+            .kafka-cluster {
+                width: 300px;
+                height: 200px;
+            }
+            
+            .producer, .consumer {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Complete Apache Kafka & Kafka Streams Guide</h1>
+            <p>Master distributed streaming with interactive visualizations and real examples!</p>
+        </div>
+
+        <div class="content">
+            <!-- Interactive Architecture -->
+            <div class="section">
+                <h2 class="section-title">🏗️ Kafka Architecture - Live Demo</h2>
+                <div class="kafka-architecture">
+                    <!-- Decorative clouds -->
+                    <div class="cloud cloud1"></div>
+                    <div class="cloud cloud2"></div>
+                    <div class="cloud cloud3"></div>
+
+                    <!-- Zookeeper -->
+                    <div class="zookeeper">
+                        🎯 ZooKeeper<br>
+                        <small>Cluster Coordinator</small>
+                    </div>
+
+                    <!-- Main Kafka Cluster -->
+                    <div class="kafka-cluster">
+                        <div class="cluster-header">📊 Kafka Cluster</div>
+                        <div class="brokers-container">
+                            <div class="broker" data-broker="1">
+                                <div class="broker-label">Broker 1</div>
+                                <div class="topics-in-broker">
+                                    <div class="topic" data-topic="users">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="orders">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="logs">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="broker" data-broker="2">
+                                <div class="broker-label">Broker 2</div>
+                                <div class="topics-in-broker">
+                                    <div class="topic" data-topic="users">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="orders">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="logs">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="broker" data-broker="3">
+                                <div class="broker-label">Broker 3</div>
+                                <div class="topics-in-broker">
+                                    <div class="topic" data-topic="users">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="orders">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="topic" data-topic="logs">
+                                        <div class="partitions">
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                            <div class="partition" data-messages="0"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Producer -->
+                    <div class="producer" onclick="produceMessage()">
+                        📤<br>
+                        <strong>Producer</strong><br>
+                        <small>Sends Messages</small>
+                    </div>
+
+                    <!-- Consumer Group -->
+                    <div class="consumer-group">
+                        <div class="consumer" onclick="consumeMessage(1)">
+                            📥<br>
+                            <strong>Consumer 1</strong>
+                        </div>
+                        <div class="consumer" onclick="consumeMessage(2)">
+                            📥<br>
+                            <strong>Consumer 2</strong>
+                        </div>
+                        <div class="consumer" onclick="consumeMessage(3)">
+                            📥<br>
+                            <strong>Consumer 3</strong>
+                        </div>
+                    </div>
+
+                    <!-- Stats Panel -->
+                    <div class="stats-panel">
+                        <h4>📊 Real-time Stats</h4>
+                        <div class="stat">
+                            <span>Messages Produced:</span>
+                            <span id="producedCount">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Messages Consumed:</span>
+                            <span id="consumedCount">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Current Offset:</span>
+                            <span id="currentOffset">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Active Partitions:</span>
+                            <span id="activePartitions">9</span>
+                        </div>
+                        <div class="stat">
+                            <span>Throughput:</span>
+                            <span id="throughput">0 msg/sec</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn" onclick="produceMessage()">📤 Produce Message</button>
+                    <button class="btn success" onclick="consumeMessage()">📥 Consume Message</button>
+                    <button class="btn" onclick="startAutoDemo()">🎬 Auto Demo</button>
+                    <button class="btn" onclick="simulateHighLoad()">⚡ High Load Test</button>
+                    <button class="btn danger" onclick="resetSystem()">🔄 Reset System</button>
+                </div>
+
+                <!-- Log Viewer -->
+                <div class="log-viewer" id="logViewer">
+                    <div class="log-entry">🚀 Kafka System Initialized</div>
+                    <div class="log-entry">✅ 3 Brokers Online</div>
+                    <div class="log-entry">📊 9 Partitions Ready</div>
+                    <div class="log-entry">🎯 ZooKeeper Connected</div>
+                </div>
+            </div>
+
+            <!-- Core Concepts -->
+            <div class="section">
+                <h2 class="section-title">🧠 Core Kafka Concepts Explained</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">🏢</div>
+                            <div class="concept-title">Apache Kafka</div>
+                        </div>
+                        <div class="concept-desc">
+                            Kafka is a distributed streaming platform that acts like a high-performance, fault-tolerant message bus. 
+                            Think of it as a massive, reliable post office that can handle millions of messages per second across multiple locations.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Real Example:</strong> Netflix uses Kafka to process over 700 billion messages per day for real-time analytics, 
+                            recommendations, and monitoring across their global infrastructure.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">🏬</div>
+                            <div class="concept-title">Brokers</div>
+                        </div>
+                        <div class="concept-desc">
+                            Brokers are individual Kafka servers that store and serve data. A Kafka cluster consists of multiple brokers 
+                            working together. Each broker can handle thousands of partitions and millions of messages.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Analogy:</strong> If Kafka is a chain of post offices, brokers are individual post office branches. 
+                            Each branch stores different mailboxes (topics) and works together with other branches.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">📮</div>
+                            <div class="concept-title">Topics</div>
+                        </div>
+                        <div class="concept-desc">
+                            Topics are categories or channels where messages are published and stored. They're like labeled containers 
+                            that organize different types of data streams. Topics are distributed across brokers for scalability.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Examples:</strong> "user-clicks", "payment-transactions", "sensor-data", "email-notifications". 
+                            Each topic can have different retention policies and partitioning strategies.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">🗂️</div>
+                            <div class="concept-title">Partitions</div>
+                        </div>
+                        <div class="concept-desc">
+                            Each topic is split into partitions for parallel processing and scalability. Partitions are ordered, 
+                            immutable sequences of messages. More partitions = more parallelism and higher throughput.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Key Point:</strong> Messages within a partition are ordered, but order across partitions isn't guaranteed. 
+                            Use partition keys to ensure related messages go to the same partition.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">📝</div>
+                            <div class="concept-title">Producers</div>
+                        </div>
+                        <div class="concept-desc">
+                            Producers are applications that publish/send messages to Kafka topics. They can send messages synchronously 
+                            or asynchronously, with various delivery guarantees and performance optimizations.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Producer Configurations:</strong> Batch size, compression (gzip, snappy), acknowledgment levels (0, 1, all), 
+                            retry policies, and idempotent writes for exactly-once semantics.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #27ae60, #229954);">👀</div>
+                            <div class="concept-title">Consumers</div>
+                        </div>
+                        <div class="concept-desc">
+                            Consumers read messages from Kafka topics. They can work individually or as part of consumer groups 
+                            for load balancing. Consumers track their position using offsets.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Consumer Groups:</strong> Multiple consumers in a group automatically share partitions. 
+                            If one consumer fails, others take over its partitions (rebalancing).
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #34495e, #2c3e50);">🔢</div>
+                            <div class="concept-title">Offsets</div>
+                        </div>
+                        <div class="concept-desc">
+                            Offsets are unique identifiers for each message within a partition. They're like page numbers in a book - 
+                            they help consumers track which messages they've read and resume from where they left off.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Offset Management:</strong> Consumers can commit offsets manually or automatically. 
+                            Kafka stores offsets in a special topic (__consumer_offsets) for fault tolerance.
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-header">
+                            <div class="concept-icon" style="background: linear-gradient(135deg, #16a085, #138d75);">🎯</div>
+                            <div class="concept-title">ZooKeeper</div>
+                        </div>
+                        <div class="concept-desc">
+                            ZooKeeper manages Kafka cluster metadata, broker coordination, and leader election. 
+                            It's like the "brain" that keeps the cluster organized and handles failures.
+                        </div>
+                        <div class="concept-example">
+                            <strong>Note:</strong> Kafka 2.8+ introduces KRaft mode that removes ZooKeeper dependency, 
+                            making Kafka self-managed and reducing operational complexity.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kafka Streams Deep Dive -->
+            <div class="section">
+                <h2 class="section-title">🌊 Kafka Streams - Stream Processing Magic</h2>
+                <div class="kafka-streams-demo">
+                    <h3 class="streams-title">Interactive Stream Processing Topology</h3>
+                    
+                    <div class="stream-topology">
+                        <div class="stream-node" id="sourceNode">
+                            <div class="data-flow">Raw Data</div>
+                            📥 Source<br>
+                            <small>Input Stream</small>
+                        </div>
+                        <div class="stream-arrow">➡️</div>
+                        <div class="stream-node" id="filterNode">
+                            <div class="data-flow">Filtering</div>
+                            🔍 Filter<br>
+                            <small>Remove Invalid</small>
+                        </div>
+                        <div class="stream-arrow">➡️</div>
+                        <div class="stream-node" id="mapNode">
+                            <div class="data-flow">Transforming</div>
+                            🔄 Map<br>
+                            <small>Transform Data</small>
+                        </div>
+                        <div class="stream-arrow">➡️</div>
+                        <div class="stream-node" id="aggregateNode">
+                            <div class="data-flow">Aggregating</div>
+                            📊 Aggregate<br>
+                            <small>Group & Count</small>
+                        </div>
+                        <div class="stream-arrow">➡️</div>
+                        <div class="stream-node" id="sinkNode">
+                            <div class="data-flow">Output</div>
+                            📤 Sink<br>
+                            <small>Output Stream</small>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn" onclick="startStreamProcessing()">🌊 Start Stream Processing</button>
+                        <button class="btn" onclick="stopStreamProcessing()">⏹️ Stop Processing</button>
+                        <button class="btn success" onclick="showStreamExample()">💡 Show Example</button>
+                    </div>
+
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #4a90e2, #357abd);">🌊</div>
+                                <div class="concept-title">What is Kafka Streams?</div>
+                            </div>
+                            <div class="concept-desc">
+                                Kafka Streams is a client library for building real-time streaming applications. 
+                                It processes data record-by-record as it flows through Kafka topics, enabling 
+                                real-time analytics, transformations, and enrichments.
+                            </div>
+                            <div class="concept-example">
+                                <strong>Key Features:</strong> Exactly-once processing, fault tolerance, 
+                                automatic scaling, stateful operations, and seamless Kafka integration.
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">🔄</div>
+                                <div class="concept-title">Stream Transformations</div>
+                            </div>
+                            <div class="concept-desc">
+                                Transform data as it flows: filter unwanted records, map values to new formats, 
+                                group by keys, aggregate counts/sums, join multiple streams, and create time windows.
+                            </div>
+                            <div class="code-example">
+// Example: Real-time click analytics
+stream.filter(record -> record.value.contains("product"))
+      .groupByKey()
+      .windowedBy(TimeWindows.of(Duration.ofMinutes(5)))
+      .count()
+      .toStream()
+      .to("product-clicks-per-5min");
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">⏰</div>
+                                <div class="concept-title">Windowing</div>
+                            </div>
+                            <div class="concept-desc">
+                                Group streaming data into time-based windows for aggregations. 
+                                Types: Tumbling (fixed), Hopping (overlapping), Session (activity-based).
+                            </div>
+                            <div class="concept-example">
+                                <strong>Use Cases:</strong> "Sales per hour", "Active users in last 10 minutes", 
+                                "Average response time per 5-second window"
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #27ae60, #229954);">🏪</div>
+                                <div class="concept-title">State Stores</div>
+                            </div>
+                            <div class="concept-desc">
+                                Local storage for stateful operations like aggregations and joins. 
+                                Automatically backed up to Kafka topics for fault tolerance and recovery.
+                            </div>
+                            <div class="concept-example">
+                                <strong>Examples:</strong> User session data, running totals, 
+                                lookup tables, windowed aggregates
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Concepts -->
+            <div class="section">
+                <h2 class="section-title">🚀 Advanced Kafka Concepts</h2>
+                <div class="advanced-concepts">
+                    <div class="concept-grid">
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">🎯</div>
+                                <div class="concept-title">Exactly-Once Semantics</div>
+                            </div>
+                            <div class="concept-desc">
+                                Ensures each message is processed exactly once, even in case of failures. 
+                                Critical for financial transactions, billing systems, and data consistency.
+                            </div>
+                            <div class="code-example">
+// Producer configuration for exactly-once
+Properties props = new Properties();
+props.put("enable.idempotence", true);
+props.put("acks", "all");
+props.put("retries", Integer.MAX_VALUE);
+props.put("max.in.flight.requests.per.connection", 5);
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">⚖️</div>
+                                <div class="concept-title">Load Balancing & Partitioning</div>
+                            </div>
+                            <div class="concept-desc">
+                                Kafka distributes load across partitions using partition keys. 
+                                Smart partitioning ensures even distribution and maintains message ordering where needed.
+                            </div>
+                            <div class="concept-example">
+                                <strong>Partitioning Strategies:</strong> Round-robin (default), key-based hashing, 
+                                custom partitioners for specific business logic
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #16a085, #138d75);">🔒</div>
+                                <div class="concept-title">Replication & Fault Tolerance</div>
+                            </div>
+                            <div class="concept-desc">
+                                Each partition has multiple replicas across different brokers. 
+                                If a broker fails, replicas ensure no data loss and continued availability.
+                            </div>
+                            <div class="concept-example">
+                                <strong>Replication Factor:</strong> Typically 3 for production. 
+                                Leader handles reads/writes, followers stay in sync for failover.
+                            </div>
+                        </div>
+
+                        <div class="concept-card">
+                            <div class="concept-header">
+                                <div class="concept-icon" style="background: linear-gradient(135deg, #34495e, #2c3e50);">⚡</div>
+                                <div class="concept-title">Performance Optimization</div>
+                            </div>
+                            <div class="concept-desc">
+                                Kafka can handle millions of messages per second with proper tuning: 
+                                batching, compression, async processing, and optimal partition count.
+                            </div>
+                            <div class="code-example">
+// High-performance producer settings
+props.put("batch.size", 16384);
+props.put("linger.ms", 5);
+props.put("compression.type", "snappy");
+props.put("buffer.memory", 33554432);
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-World Use Cases -->
+            <div class="section">
+                <h2 class="section-title">🌍 Real-World Kafka Use Cases</h2>
+                <div class="use-cases">
+                    <div class="use-case">
+                        <h3>🛒 E-commerce Platform</h3>
+                        <p><strong>Challenge:</strong> Handle millions of user clicks, orders, and inventory updates in real-time.</p>
+                        <p><strong>Solution:</strong> Kafka streams user events to recommendation engines, inventory systems, and analytics platforms.</p>
+                        <div class="code-example">
+Topics: user-clicks, orders, inventory-updates, recommendations
+Consumers: ML models, databases, dashboards, notification services
+                        </div>
+                    </div>
+
+                    <div class="use-case">
+                        <h3>🏦 Financial Services</h3>
+                        <p><strong>Challenge:</strong> Process transactions with exactly-once guarantees and fraud detection.</p>
+                        <p><strong>Solution:</strong> Kafka ensures transaction integrity while feeding real-time fraud detection systems.</p>
+                        <div class="code-example">
+Topics: transactions, fraud-alerts, account-updates
+Features: Exactly-once processing, encryption, audit trails
+                        </div>
+                    </div>
+
+                    <div class="use-case">
+                        <h3>🚗 IoT & Transportation</h3>
+                        <p><strong>Challenge:</strong> Collect and process sensor data from thousands of vehicles in real-time.</p>
+                        <p><strong>Solution:</strong> Kafka ingests sensor streams and feeds route optimization and predictive maintenance systems.</p>
+                        <div class="code-example">
+Topics: vehicle-telemetry, gps-coordinates, maintenance-alerts
+Processing: Real-time aggregations, geofencing, predictive analytics
+                        </div>
+                    </div>
+
+                    <div class="use-case">
+                        <h3>📱 Social Media Platform</h3>
+                        <p><strong>Challenge:</strong> Handle billions of posts, likes, and notifications across global users.</p>
+                        <p><strong>Solution:</strong> Kafka powers real-time feeds, notifications, and content recommendation engines.</p>
+                        <div class="code-example">
+Topics: posts, likes, comments, notifications, user-activity
+Scale: Millions of messages/second, global replication
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="section">
+                <h2 class="section-title">📊 Performance Metrics Dashboard</h2>
+                <div class="performance-metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="throughputMetric">0</div>
+                        <div class="metric-label">Messages/Second</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="latencyMetric">0ms</div>
+                        <div class="metric-label">Average Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="batchSizeMetric">0</div>
+                        <div class="metric-label">Avg Batch Size</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="compressionMetric">0%</div>
+                        <div class="metric-label">Compression Ratio</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let producedCount = 0;
+        let consumedCount = 0;
+        let currentOffset = 0;
+        let autoDemo = null;
+        let streamProcessing = null;
+        let messageQueue = [];
+        let startTime = Date.now();
+
+        // Topics and their messages
+        const topics = ['users', 'orders', 'logs'];
+        const sampleMessages = {
+            users: ['user_login', 'user_signup', 'profile_update', 'user_logout'],
+            orders: ['order_created', 'payment_processed', 'order_shipped', 'order_delivered'],
+            logs: ['info_log', 'error_log', 'debug_log', 'warning_log']
+        };
+
+        // Initialize system
+        function initializeSystem() {
+            updateStats();
+            logMessage('🎉 System Ready - Click buttons to interact!');
+        }
+
+        // Produce message function
+        function produceMessage() {
+            const topic = topics[Math.floor(Math.random() * topics.length)];
+            const messages = sampleMessages[topic];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            
+            // Find random broker and partition
+            const brokerNum = Math.floor(Math.random() * 3) + 1;
+            const topicElements = document.querySelectorAll(`[data-topic="${topic}"]`);
+            const randomTopic = topicElements[Math.floor(Math.random() * topicElements.length)];
+            const partitions = randomTopic.querySelectorAll('.partition');
+            const randomPartition = partitions[Math.floor(Math.random() * partitions.length)];
+            
+            // Animate message
+            animateMessage('producer', randomTopic, message);
+            
+            // Update partition message count
+            const currentCount = parseInt(randomPartition.dataset.messages) || 0;
+            randomPartition.dataset.messages = currentCount + 1;
+            
+            // Update stats
+            producedCount++;
+            currentOffset++;
+            messageQueue.push({topic, message, offset: currentOffset, timestamp: Date.now()});
+            
+            updateStats();
+            logMessage(`📤 Produced: ${message} to ${topic} (Offset: ${currentOffset})`);
+            
+            // Highlight topic
+            randomTopic.classList.add('active');
+            setTimeout(() => randomTopic.classList.remove('active'), 1000);
+        }
+
+        // Consume message function
+        function consumeMessage(consumerNum) {
+            if (messageQueue.length === 0) {
+                logMessage('⚠️ No messages to consume!');
+                return;
+            }
+            
+            const message = messageQueue.shift();
+            const consumerElement = consumerNum ? 
+                document.querySelector(`.consumer:nth-child(${consumerNum})`) : 
+                document.querySelector('.consumer');
+            
+            // Animate consumption
+            animateConsumption(consumerElement, message);
+            
+            consumedCount++;
+            updateStats();
+            logMessage(`📥 Consumer ${consumerNum || 1} consumed: ${message.message} from ${message.topic}`);
+        }
+
+        // Animate message from producer to topic
+        function animateMessage(source, target, messageText) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.textContent = messageText.substr(0, 3);
+            
+            const sourceEl = document.querySelector(`.${source}`);
+            const sourceRect = sourceEl.getBoundingClientRect();
+            const containerRect = document.querySelector('.kafka-architecture').getBoundingClientRect();
+            
+            messageEl.style.left = (sourceRect.left - containerRect.left + 60) + 'px';
+            messageEl.style.top = (sourceRect.top - containerRect.top + 60) + 'px';
+            
+            document.querySelector('.kafka-architecture').appendChild(messageEl);
+            
+            setTimeout(() => {
+                messageEl.classList.add('animate');
+                const targetRect = target.getBoundingClientRect();
+                messageEl.style.left = (targetRect.left - containerRect.left + 40) + 'px';
+                messageEl.style.top = (targetRect.top - containerRect.top + 15) + 'px';
+            }, 100);
+            
+            setTimeout(() => {
+                messageEl.remove();
+            }, 1000);
+        }
+
+        // Animate consumption
+        function animateConsumption(consumer, message) {
+            consumer.style.transform = 'scale(1.2)';
+            consumer.style.backgroundColor = '#2ecc71';
+            
+            setTimeout(() => {
+                consumer.style.transform = 'scale(1)';
+                consumer.style.backgroundColor = '';
+            }, 300);
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('producedCount').textContent = producedCount;
+            document.getElementById('consumedCount').textContent = consumedCount;
+            document.getElementById('currentOffset').textContent = currentOffset;
+            
+            // Calculate throughput
+            const elapsed = (Date.now() - startTime) / 1000;
+            const throughput = Math.round(producedCount / elapsed);
+            document.getElementById('throughput').textContent = throughput + ' msg/sec';
+            
+            // Update performance metrics
+            document.getElementById('throughputMetric').textContent = throughput;
+            document.getElementById('latencyMetric').textContent = Math.floor(Math.random() * 20) + 'ms';
+            document.getElementById('batchSizeMetric').textContent = Math.floor(Math.random() * 50) + 16;
+            document.getElementById('compressionMetric').textContent = Math.floor(Math.random() * 30) + 60 + '%';
+        }
+
+        // Log message to viewer
+        function logMessage(message) {
+            const logViewer = document.getElementById('logViewer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            logViewer.appendChild(logEntry);
+            logViewer.scrollTop = logViewer.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (logViewer.children.length > 50) {
+                logViewer.removeChild(logViewer.firstChild);
+            }
+        }
+
+        // Auto demo function
+        function startAutoDemo() {
+            if (autoDemo) {
+                clearInterval(autoDemo);
+                autoDemo = null;
+                document.querySelector('button[onclick="startAutoDemo()"]').textContent = '🎬 Auto Demo';
+                logMessage('⏹️ Auto demo stopped');
+                return;
+            }
+            
+            document.querySelector('button[onclick="startAutoDemo()"]').textContent = '⏹️ Stop Demo';
+            logMessage('🎬 Auto demo started');
+            
+            autoDemo = setInterval(() => {
+                if (Math.random() > 0.3) {
+                    produceMessage();
+                }
+                if (Math.random() > 0.5 && messageQueue.length > 0) {
+                    consumeMessage();
+                }
+            }, 1000);
+        }
+
+        // High load simulation
+        function simulateHighLoad() {
+            logMessage('⚡ Starting high load simulation...');
+            
+            let count = 0;
+            const highLoadInterval = setInterval(() => {
+                produceMessage();
+                if (Math.random() > 0.3) {
+                    consumeMessage();
+                }
+                count++;
+                
+                if (count >= 20) {
+                    clearInterval(highLoadInterval);
+                    logMessage('✅ High load simulation completed');
+                }
+            }, 100);
+        }
+
+        // Stream processing animation
+        function startStreamProcessing() {
+            if (streamProcessing) return;
+            
+            logMessage('🌊 Stream processing started');
+            const nodes = ['sourceNode', 'filterNode', 'mapNode', 'aggregateNode', 'sinkNode'];
+            let currentNode = 0;
+            
+            streamProcessing = setInterval(() => {
+                // Reset all nodes
+                nodes.forEach(id => {
+                    document.getElementById(id).classList.remove('processing');
+                });
+                
+                // Activate current node
+                document.getElementById(nodes[currentNode]).classList.add('processing');
+                
+                currentNode = (currentNode + 1) % nodes.length;
+            }, 800);
+        }
+
+        function stopStreamProcessing() {
+            if (streamProcessing) {
+                clearInterval(streamProcessing);
+                streamProcessing = null;
+                
+                // Remove all processing states
+                ['sourceNode', 'filterNode', 'mapNode', 'aggregateNode', 'sinkNode'].forEach(id => {
+                    document.getElementById(id).classList.remove('processing');
+                });
+                
+                logMessage('⏹️ Stream processing stopped');
+            }
+        }
+
+        function showStreamExample() {
+            logMessage('💡 Stream Example: E-commerce Click Analytics');
+            logMessage('📊 Input: user-clicks → Filter: valid clicks → Map: enrich data → Aggregate: count by product → Output: product-popularity');
+        }
+
+        // Reset system
+        function resetSystem() {
+            // Stop any running processes
+            if (autoDemo) {
+                clearInterval(autoDemo);
+                autoDemo = null;
+                document.querySelector('button[onclick="startAutoDemo()"]').textContent = '🎬 Auto Demo';
+            }
+            
+            stopStreamProcessing();
+            
+            // Reset counters
+            producedCount = 0;
+            consumedCount = 0;
+            currentOffset = 0;
+            messageQueue = [];
+            startTime = Date.now();
+            
+            // Reset partition counts
+            document.querySelectorAll('.partition').forEach(partition => {
+                partition.dataset.messages = '0';
+            });
+            
+            // Clear active states
+            document.querySelectorAll('.topic.active').forEach(topic => {
+                topic.classList.remove('active');
+            });
+            
+            // Clear log
+            const logViewer = document.getElementById('logViewer');
+            logViewer.innerHTML = `
+                <div class="log-entry">🔄 System Reset</div>
+                <div class="log-entry">✅ 3 Brokers Online</div>
+                <div class="log-entry">📊 9 Partitions Ready</div>
+                <div class="log-entry">🎯 ZooKeeper Connected</div>
+            `;
+            
+            updateStats();
+            logMessage('🎉 System ready for new demo!');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initializeSystem);
+        
+        // Add some interactive tooltips
+        document.querySelectorAll('.broker').forEach(broker => {
+            broker.addEventListener('mouseenter', function() {
+                const brokerNum = this.dataset.broker;
+                logMessage(`🔍 Viewing Broker ${brokerNum} - ${this.querySelectorAll('.topic').length} topics`);
+            });
+        });
+        
+        document.querySelectorAll('.topic').forEach(topic => {
+            topic.addEventListener('click', function() {
+                const topicName = this.dataset.topic;
+                const partitionCount = this.querySelectorAll('.partition').length;
+                const totalMessages = Array.from(this.querySelectorAll('.partition'))
+                    .reduce((sum, p) => sum + parseInt(p.dataset.messages), 0);
+                logMessage(`📊 Topic: ${topicName} | Partitions: ${partitionCount} | Messages: ${totalMessages}`);
+            });
+        });
+    </script>
+</body>
+</html>

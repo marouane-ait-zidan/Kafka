@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafka Explained - Interactive Learning</title>
+    <style>
+        :root {
+            --primary-color: #8e24aa;
+            --producer-color: #2e7d32;
+            --consumer-color: #1565c0;
+            --broker-color: #5e35b1;
+            --topic-color: #ef6c00;
+            --partition-color: #ffd600;
+            --message-color: #ffffff;
+            --bg-color: #f5f5f5;
+            --text-color: #212121;
+            --highlight-color: #ff4081;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin-top: 25px;
+        }
+
+        .kafka-system {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kafka-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .producer-section, .consumer-section {
+            width: 22%;
+            text-align: center;
+        }
+
+        .kafka-cluster-section {
+            width: 50%;
+            background-color: rgba(142, 36, 170, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .actor {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 15px auto;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .actor:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .actor i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .producer {
+            background: linear-gradient(135deg, #43a047, #1b5e20);
+        }
+
+        .consumer {
+            background: linear-gradient(135deg, #1e88e5, #0d47a1);
+        }
+
+        .kafka-cluster {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(142, 36, 170, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .cluster-title {
+            color: var(--primary-color);
+            margin: 0 0 15px 0;
+            font-weight: bold;
+            font-size: 1.4em;
+        }
+
+        .brokers {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .broker {
+            background: linear-gradient(135deg, #7e57c2, #4527a0);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 25%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .broker:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .topics {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .topic {
+            background: linear-gradient(135deg, #ff9800, #e65100);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .topic-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 0;
+        }
+
+        .partitions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .partition {
+            background: linear-gradient(to bottom, #ffd600, #ffea00);
+            border-radius: 8px;
+            flex: 1;
+            min-height: 150px;
+            position: relative;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .partition-header {
+            text-align: center;
+            color: #5d4037;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            border-bottom: 1px dashed #5d4037;
+            padding-bottom: 5px;
+        }
+
+        .messages {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 5px;
+        }
+
+        .message {
+            background-color: white;
+            color: #212121;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            padding: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 0.85em;
+            position: relative;
+            animation: fadeIn 0.5s ease;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-timestamp {
+            font-size: 0.7em;
+            color: #757575;
+            margin-left: 5px;
+            white-space: nowrap;
+        }
+
+        .offset-marker {
+            position: absolute;
+            left: -5px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--consumer-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .control-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-producer {
+            background-color: var(--producer-color);
+        }
+
+        .btn-consumer {
+            background-color: var(--consumer-color);
+        }
+
+        .btn-reset {
+            background-color: #e91e63;
+        }
+        
+        .btn-pause {
+            background-color: #ff9800;
+        }
+
+        .message-ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 100;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s linear;
+        }
+
+        .producer-ball {
+            background-color: var(--producer-color);
+        }
+
+        .consumer-ball {
+            background-color: var(--consumer-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .flying-message {
+            animation: flyMessage 1.5s ease-in-out forwards;
+        }
+
+        @keyframes flyMessage {
+            0% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(var(--targetX), var(--targetY)) scale(1);
+            }
+        }
+
+        .concept-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .concept-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .concept-icon {
+            font-size: 1.5em;
+            color: var(--primary-color);
+        }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .example-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .example-card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        .kafka-streams-section {
+            background-color: rgba(142, 36, 170, 0.05);
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .streams-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+        }
+
+        .stream-topic {
+            background: linear-gradient(135deg, #ff9800, #e65100);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .stream-processor {
+            background: linear-gradient(135deg, #7e57c2, #4527a0);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 25%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+
+        .stream-arrow {
+            width: 50px;
+            height: 4px;
+            background-color: var(--primary-color);
+            position: relative;
+        }
+
+        .stream-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -8px;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 15px solid var(--primary-color);
+        }
+
+        .status-log {
+            background-color: #212121;
+            color: #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .log-producer {
+            border-color: var(--producer-color);
+        }
+
+        .log-kafka {
+            border-color: var(--primary-color);
+        }
+
+        .log-consumer {
+            border-color: var(--consumer-color);
+        }
+
+        .log-streams {
+            border-color: var(--broker-color);
+        }
+
+        .timestamp {
+            color: #888;
+            margin-right: 8px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tooltipped:hover + .tooltip {
+            opacity: 1;
+        }
+
+        .accordion {
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion.active .accordion-content {
+            max-height: 500px;
+            padding: 15px;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 900px) {
+            .kafka-flow {
+                flex-direction: column;
+            }
+
+            .producer-section, .consumer-section, .kafka-cluster-section {
+                width: 100%;
+                margin-bottom: 30px;
+            }
+
+            .streams-diagram {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .stream-topic, .stream-processor {
+                width: 80%;
+            }
+
+            .stream-arrow {
+                transform: rotate(90deg);
+                margin: 15px 0;
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        .message-queue {
+            position: relative;
+            height: 100%;
+        }
+
+        .offset-line {
+            position: absolute;
+            width: calc(100% - 10px);
+            height: 2px;
+            background-color: #e91e63;
+            top: 50%;
+            left: 5px;
+            z-index: 5;
+            transition: top 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kafka Explained: Interactive Learning</h1>
+            <p>Understanding Apache Kafka concepts through interactive visualization</p>
+        </header>
+
+        <div class="control-panel">
+            <h2>Kafka Interactive System</h2>
+            <p>Click the buttons below to see how Kafka works in action. Watch as messages flow from producers through Kafka to consumers.</p>
+            
+            <div class="controls">
+                <button class="btn btn-producer" id="produce-btn">
+                    <span>Produce Message</span>
+                </button>
+                <button class="btn btn-consumer" id="consume-btn">
+                    <span>Consume Message</span>
+                </button>
+                <button class="btn btn-reset" id="reset-btn">
+                    <span>Reset Demo</span>
+                </button>
+            </div>
+
+            <div class="status-log" id="log-container">
+                <div class="log-entry log-kafka">
+                    <span class="timestamp">[System]</span>
+                    <span>Kafka system initialized. Ready for messages.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="kafka-system">
+            <div class="kafka-flow">
+                <div class="producer-section">
+                    <h3>Producers</h3>
+                    <div class="actor producer tooltipped" id="producer1" data-tooltip="Weather data producer">
+                        Weather App
+                    </div>
+                    <div class="tooltip">Weather applications that collect and send temperature, humidity, and wind data.</div>
+                    
+                    <div class="actor producer tooltipped" id="producer2" data-tooltip="Shopping data producer">
+                        Shopping App
+                    </div>
+                    <div class="tooltip">E-commerce applications that track user shopping actions like adding items to cart.</div>
+                </div>
+
+                <div class="kafka-cluster-section">
+                    <div class="kafka-cluster">
+                        <div class="cluster-title">Kafka Cluster</div>
+                        <div class="brokers">
+                            <div class="broker tooltipped" id="broker1" data-tooltip="Kafka broker stores and manages messages">
+                                Broker 1
+                            </div>
+                            <div class="tooltip">Responsible for storing messages and serving them to consumers. Brokers work together to provide fault tolerance.</div>
+                            
+                            <div class="broker tooltipped" id="broker2" data-tooltip="Kafka broker stores and manages messages">
+                                Broker 2
+                            </div>
+                            <div class="tooltip">Each broker manages a set of partitions and handles read/write requests for those partitions.</div>
+                            
+                            <div class="broker tooltipped" id="broker3" data-tooltip="Kafka broker stores and manages messages">
+                                Broker 3
+                            </div>
+                            <div class="tooltip">Brokers ensure data replication and high availability across the cluster.</div>
+                        </div>
+                        
+                        <div class="topics">
+                            <div class="topic">
+                                <div class="topic-header">
+                                    <h4 class="topic-title">Weather Topic</h4>
+                                    <span class="topic-info tooltipped" data-tooltip="Collection of weather data messages">Weather Data Stream</span>
+                                    <div class="tooltip">A topic is a category or feed name to which messages are published. Topics in Kafka are multi-subscriber.</div>
+                                </div>
+                                
+                                <div class="partitions">
+                                    <div class="partition" id="weather-partition-0">
+                                        <div class="partition-header">Partition 0</div>
+                                        <div class="offset-line" style="top: 70%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Sunny, 75°F</div>
+                                                <div class="message-timestamp">10:22:15</div>
+                                            </div>
+                                            <div class="message">
+                                                <div class="message-content">Cloudy, 65°F</div>
+                                                <div class="message-timestamp">10:22:10</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="partition" id="weather-partition-1">
+                                        <div class="partition-header">Partition 1</div>
+                                        <div class="offset-line" style="top: 50%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Rainy, 60°F</div>
+                                                <div class="message-timestamp">10:22:08</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="partition" id="weather-partition-2">
+                                        <div class="partition-header">Partition 2</div>
+                                        <div class="offset-line" style="top: 25%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Snowy, 30°F</div>
+                                                <div class="message-timestamp">10:22:00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="topic">
+                                <div class="topic-header">
+                                    <h4 class="topic-title">Shopping Topic</h4>
+                                    <span class="topic-info tooltipped" data-tooltip="Collection of shopping action messages">Shopping Activity Stream</span>
+                                    <div class="tooltip">Topics can be created by producers or administrators and can have many partitions to enable parallel processing.</div>
+                                </div>
+                                
+                                <div class="partitions">
+                                    <div class="partition" id="shopping-partition-0">
+                                        <div class="partition-header">Partition 0</div>
+                                        <div class="offset-line" style="top: 25%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Added item: Apples</div>
+                                                <div class="message-timestamp">10:21:45</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="partition" id="shopping-partition-1">
+                                        <div class="partition-header">Partition 1</div>
+                                        <div class="offset-line" style="top: 60%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Added item: Milk</div>
+                                                <div class="message-timestamp">10:21:30</div>
+                                            </div>
+                                            <div class="message">
+                                                <div class="message-content">Added item: Cookies</div>
+                                                <div class="message-timestamp">10:21:15</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="partition" id="shopping-partition-2">
+                                        <div class="partition-header">Partition 2</div>
+                                        <div class="offset-line" style="top: 25%"></div>
+                                        <div class="messages">
+                                            <div class="message">
+                                                <div class="message-content">Added item: Toys</div>
+                                                <div class="message-timestamp">10:21:00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consumer-section">
+                    <h3>Consumers</h3>
+                    <div class="actor consumer tooltipped" id="consumer1" data-tooltip="Weather data consumer">
+                        Weather Dashboard
+                    </div>
+                    <div class="tooltip">Applications that process weather data to create forecasts and visualizations.</div>
+                    
+                    <div class="actor consumer tooltipped" id="consumer2" data-tooltip="Shopping data consumer">
+                        Shopping Analytics
+                    </div>
+                    <div class="tooltip">Systems that analyze shopping data to generate recommendations and track inventory.</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>Kafka Streams: Transforming Data</h2>
+        <div class="kafka-streams-section">
+            <p>Kafka Streams is a client library for building applications and microservices, where the input and output data are stored in Kafka clusters.</p>
+            
+            <div class="streams-diagram">
+                <div class="stream-topic">Input Topic<br>(Weather Topic)</div>
+                <div class="stream-arrow"></div>
+                <div class="stream-processor tooltipped" id="stream-processor" data-tooltip="Transforms and processes data">
+                    <div>Stream Processor</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">Temperature Converter</div>
+                </div>
+                <div class="tooltip">Processes each message from the input topic, applies transformations, and sends results to output topic.</div>
+                <div class="stream-arrow"></div>
+                <div class="stream-topic">Output Topic<br>(Converted Weather)</div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="stream-btn">
+                    <span>Process Stream Data</span>
+                </button>
+            </div>
+        </div>
+
+        <h2>Kafka Concepts Explained</h2>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">🏬 Kafka</h3>
+            <p>Kafka is like a big, magical toybox that helps computers share messages with each other. Imagine Kafka as a special post office that can handle millions of letters (messages) every second!</p>
+            <p>When you send a letter to this post office, it doesn't just deliver it - it keeps a copy! This way, if someone comes later asking for the same letter, Kafka can give it to them too. This is super important for computers that need to share information.</p>
+            <p>What makes Kafka special is that it can handle LOTS of messages very quickly, and multiple friends can read the same messages. It's like a library where books don't get checked out - they stay on the shelf for everyone to read.</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">📚 Topic</h3>
+            <p>A topic is like a folder or category for similar messages. Think of it like different shelves in a bookstore - one for adventure books, one for cookbooks, and one for comic books.</p>
+            <p>In our example, we have a "Weather Topic" for all messages about the weather, and a "Shopping Topic" for all messages about shopping activities.</p>
+            <p>Topics help keep things organized so messages about the same subject stay together. When a producer wants to send a message, it picks which topic it belongs in. When a consumer wants to read messages, it chooses which topics it's interested in.</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">🤖 Broker</h3>
+            <p>Brokers are like helpful robots that take care of storing messages. Each broker is a separate computer that works together with other brokers to form a Kafka cluster.</p>
+            <p>If you think of Kafka as a big library, then brokers are like the librarians. They:</p>
+            <ul>
+                <li>Store messages safely on their bookshelves</li>
+                <li>Help producers put new messages in the right place</li>
+                <li>Help consumers find and read the messages they want</li>
+                <li>Make copies of messages to keep them safe (this is called "replication")</li>
+            </ul>
+            <p>Having multiple brokers means that if one breaks down, the others can keep working - just like having multiple librarians in a library!</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">💌 Event/Message</h3>
+            <p>An event or message is a piece of information that gets sent through Kafka. It's like a note that says something happened.</p>
+            <p>Each message has:</p>
+            <ul>
+                <li>A key (optional) - like an address label</li>
+                <li>A value - the actual information</li>
+                <li>A timestamp - when it was created</li>
+            </ul>
+            <p>Examples of messages:</p>
+            <ul>
+                <li>"The temperature is 75°F in New York"</li>
+                <li>"User Jane added apples to her shopping cart"</li>
+                <li>"Train #42 arrived at the station"</li>
+            </ul>
+            <p>Messages in Kafka don't get deleted right away after they're read. They stick around for a while (which you can configure), so many different consumers can read them.</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">✏️ Producer</h3>
+            <p>Producers are applications that create and send messages to Kafka. They're like authors writing books for the library.</p>
+            <p>A producer:</p>
+            <ul>
+                <li>Creates a message when something happens (like a temperature change)</li>
+                <li>Decides which topic the message belongs to</li>
+                <li>Sends the message to the Kafka cluster</li>
+            </ul>
+            <p>Examples of producers:</p>
+            <ul>
+                <li>Weather stations sending temperature readings</li>
+                <li>E-commerce websites tracking user clicks</li>
+                <li>Banking systems recording transactions</li>
+            </ul>
+            <p>Producers don't need to worry about which broker will store their message - Kafka handles that automatically!</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">👀 Consumer</h3>
+            <p>Consumers are applications that read and process messages from Kafka. They're like readers checking out books from the library.</p>
+            <p>A consumer:</p>
+            <ul>
+                <li>Subscribes to one or more topics it's interested in</li>
+                <li>Reads messages at its own pace</li>
+                <li>Keeps track of which messages it has already read</li>
+                <li>Processes the information in the messages</li>
+            </ul>
+            <p>Examples of consumers:</p>
+            <ul>
+                <li>Weather dashboards displaying current conditions</li>
+                <li>Analytics systems analyzing shopping patterns</li>
+                <li>Notification services sending alerts based on events</li>
+            </ul>
+            <p>Multiple consumers can read the same messages without interfering with each other - like many people reading copies of the same book!</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">🔖 Offset</h3>
+            <p>An offset is like a bookmark that helps consumers remember which messages they've already read.</p>
+            <p>Each message in a partition gets a unique number (starting from 0 and going up). When a consumer reads a message, it remembers its offset number. Next time, it can start reading from where it left off.</p>
+            <p>The red line in our visualization shows the current offset for a consumer - it has read all messages above the line.</p>
+            <p>Offsets help consumers:</p>
+            <ul>
+                <li>Not read the same message twice (unless they want to)</li>
+                <li>Pick up where they left off if they crash and restart</li>
+                <li>Go back in time to re-read old messages if needed</li>
+            </ul>
+            <p>Kafka stores consumer offsets in a special topic called "__consumer_offsets" so they don't get lost.</p>
+        </div>
+        
+        <div class="concept-card">
+            <h3 class="concept-title">🧩 Partition</h3>
+            <p>Partitions are like dividing a big book into smaller chapters so many friends can read different parts at the same time.</p>
+            <p>Each topic is split into one or more partitions, and each partition:</p>
+            <ul>
+                <li>Is an ordered sequence of messages</li>
+                <li>Can be hosted on a different broker</li>
+                <li>Can be read by only one consumer in a consumer group at a time</li>
+            </ul>
+            <p>Partitions help Kafka scale by:</p>
+            <ul>
+                <li>Spreading data across multiple brokers</li>
+                <li>Allowing parallel processing by multiple consumers</li>
+                <li>Handling more messages than could fit on one computer</li>
+            </ul>
+            <p>Messages with the same key always go to the same partition, which helps when you need messages from the same source to stay in order.</p>
+        </div>
+
+        <div class="concept-card">
+            <h3 class="concept-title">🔄 Kafka Streams</h3>
+            <p>Kafka Streams is like having magic workers who read messages from one topic, change them somehow, and write new messages to another topic.</p>
+            <p>Imagine having a robot that:</p>
+            <ul>
+                <li>Takes messages from the "Temperature in Fahrenheit" topic</li>
+                <li>Converts each temperature from Fahrenheit to Celsius</li>
+                <li>Writes the converted temperatures to the "Temperature in Celsius" topic</li>
+            </ul>
+            <p>Kafka Streams lets you:</p>
+            <ul>
+                <li>Filter messages (only keep the ones you care about)</li>
+                <li>Transform messages (change temperatures from F° to C°)</li>
+                <li>Aggregate messages (count how many were sunny vs. rainy)</li>
+                <li>Join data from multiple topics (combine weather with location data)</li>
+            </ul>
+            <p>It's a powerful way to process data in real-time as it flows through Kafka!</p>
+        </div>
+
+        <h2>Real-world Examples</h2>
+        <div class="examples">
+            <div class="example-card">
+                <h3>Netflix: Streaming Data Pipeline</h3>
+                <p>Netflix uses Kafka to handle more than 8 trillion events per day! When you watch a show, Kafka helps track:</p>
+                <ul>
+                    <li>What you're watching</li>
+                    <li>When you pause or stop watching</li>
+                    <li>Video quality and buffering events</li>
+                </ul>
+                <p>This data helps Netflix recommend shows you might like and monitor the quality of their service.</p>
+            </div>
+            
+            <div class="example-card">
+                <h3>Uber: Real-time Monitoring</h3>
+                <p>Uber uses Kafka to process millions of messages per second about:</p>
+                <ul>
+                    <li>Driver locations (updated every few seconds)</li>
+                    <li>New ride requests</li>
+                    <li>Traffic conditions</li>
+                </ul>
+                <p>This helps Uber match riders with nearby drivers and estimate arrival times accurately.</p>
+            </div>
+            
+            <div class="example-card">
+                <h3>Weather Monitoring System</h3>
+                <p>Thousands of weather stations (producers) send readings to Kafka topics:</p>
+                <ul>
+                    <li>Temperature, humidity, wind speed</li>
+                    <li>Rainfall amounts</li>
+                    <li>Barometric pressure</li>
+                </ul>
+                <p>Consumer applications read this data to create forecasts, send weather alerts, and update weather apps on phones.</p>
+            </div>
+        </div>
+
+        <h2>Common Kafka Patterns</h2>
+        <div class="accordion">
+            <div class="accordion-header">
+                <span>Consumer Groups</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p>Consumer groups allow multiple consumers to work together to process messages from a topic. Each partition is read by exactly one consumer in the group.</p>
+                <p>This is like having a team of friends divide up chapters of a book to read it faster:</p>
+                <ul>
+                    <li>If you have more consumers than partitions, some consumers will be idle</li>
+                    <li>If you have more partitions than consumers, some consumers will read multiple partitions</li>
+                </ul>
+                <p>Consumer groups provide scalability and fault tolerance for message processing.</p>
+            </div>
+        </div>
+        
+        <div class="accordion">
+            <div class="accordion-header">
+                <span>Event Sourcing</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p>Event sourcing is a pattern where you store every change to your application state as an event, rather than just the current state.</p>
+                <p>Kafka is perfect for event sourcing because:</p>
+                <ul>
+                    <li>It keeps a log of all events in order</li>
+                    <li>You can replay events to rebuild state if needed</li>
+                    <li>You can create new views of data by reprocessing events</li>
+                </ul>
+                <p>It's like keeping every draft of a story instead of just the final version.</p>
+            </div>
+        </div>
+        
+        <div class="accordion">
+            <div class="accordion-header">
+                <span>CQRS (Command Query Responsibility Segregation)</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p>CQRS separates the parts of your application that change data (commands) from the parts that read data (queries).</p>
+                <p>With Kafka:</p>
+                <ul>
+                    <li>Commands become messages in command topics</li>
+                    <li>Event processors update different read models based on these commands</li>
+                    <li>Query services read from these optimized models</li>
+                </ul>
+                <p>This pattern lets you optimize your system for both writing and reading data.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Make accordions work
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const accordion = header.parentElement;
+                accordion.classList.toggle('active');
+            });
+        });
+        
+        // Event handler for producing messages
+        document.getElementById('produce-btn').addEventListener('click', function() {
+            produceMessage();
+        });
+        
+        // Event handler for consuming messages
+        document.getElementById('consume-btn').addEventListener('click', function() {
+            consumeMessage();
+        });
+        
+        // Event handler for resetting the demo
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            resetDemo();
+        });
+        
+        // Event handler for streaming data
+        document.getElementById('stream-btn').addEventListener('click', function() {
+            processStream();
+        });
+        
+        // Weather data and shopping items for random messages
+        const weatherData = [
+            { condition: "Sunny", temp: "78°F" },
+            { condition: "Partly Cloudy", temp: "72°F" },
+            { condition: "Overcast", temp: "65°F" },
+            { condition: "Rainy", temp: "62°F" },
+            { condition: "Thunderstorms", temp: "68°F" },
+            { condition: "Windy", temp: "70°F" },
+            { condition: "Foggy", temp: "64°F" },
+            { condition: "Snowy", temp: "28°F" },
+            { condition: "Clear", temp: "75°F" },
+            { condition: "Hot", temp: "95°F" }
+        ];
+        
+        const shoppingItems = [
+            "Bananas", "Milk", "Bread", "Coffee", "Eggs", 
+            "Cheese", "Yogurt", "Cereal", "Chicken", "Pizza", 
+            "Ice Cream", "Pasta", "Rice", "Apples", "Tomatoes"
+        ];
+        
+        // Function to add log entry
+        function addLogEntry(type, message) {
+            const logContainer = document.getElementById('log-container');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString('en-US', { hour12: false });
+            
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span><span>${message}</span>`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Function to produce a message
+        function produceMessage() {
+            // Randomly pick producer and topic
+            const isWeatherProducer = Math.random() > 0.5;
+            const producerId = isWeatherProducer ? 'producer1' : 'producer2';
+            const producer = document.getElementById(producerId);
+            
+            // Create message content
+            let messageContent, topicName, partitionPrefix;
+            if (isWeatherProducer) {
+                const weatherItem = weatherData[Math.floor(Math.random() * weatherData.length)];
+                messageContent = `${weatherItem.condition}, ${weatherItem.temp}`;
+                topicName = 'Weather Topic';
+                partitionPrefix = 'weather-partition-';
+            } else {
+                const item = shoppingItems[Math.floor(Math.random() * shoppingItems.length)];
+                messageContent = `Added item: ${item}`;
+                topicName = 'Shopping Topic';
+                partitionPrefix = 'shopping-partition-';
+            }
+            
+            // Add to log
+            addLogEntry('producer', `${isWeatherProducer ? 'Weather App' : 'Shopping App'} produced: "${messageContent}"`);
+            
+            // Create animation dot
+            const dot = document.createElement('div');
+            dot.className = 'message-ball producer-ball';
+            document.body.appendChild(dot);
+            
+            // Position at producer
+            const producerRect = producer.getBoundingClientRect();
+            dot.style.left = (producerRect.left + producerRect.width/2 - 10) + 'px';
+            dot.style.top = (producerRect.top + producerRect.height/2 - 10) + 'px';
+            dot.style.opacity = 1;
+            
+            // Create the message element that will be added to partition
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            
+            const contentElement = document.createElement('div');
+            contentElement.className = 'message-content';
+            contentElement.textContent = messageContent;
+            
+            const timestampElement = document.createElement('div');
+            timestampElement.className = 'message-timestamp';
+            const now = new Date();
+            timestampElement.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            
+            messageElement.appendChild(contentElement);
+            messageElement.appendChild(timestampElement);
+            
+            // Select a broker
+            const brokerIndex = Math.floor(Math.random() * 3) + 1;
+            const broker = document.getElementById('broker' + brokerIndex);
+            const brokerRect = broker.getBoundingClientRect();
+            
+            // Animate to broker
+            setTimeout(() => {
+                dot.style.setProperty('--targetX', (brokerRect.left - producerRect.left) + 'px');
+                dot.style.setProperty('--targetY', (brokerRect.top - producerRect.top) + 'px');
+                dot.classList.add('flying-message');
+                
+                addLogEntry('kafka', `Broker ${brokerIndex} received message and routing to ${topicName}`);
+                
+                // After reaching broker, send to partition
+                setTimeout(() => {
+                    // Choose a random partition
+                    const partitionIndex = Math.floor(Math.random() * 3);
+                    const partition = document.getElementById(`${partitionPrefix}${partitionIndex}`);
+                    const partitionRect = partition.getBoundingClientRect();
+                    
+                    // Reset animation
+                    document.body.removeChild(dot);
+                    const newDot = document.createElement('div');
+                    newDot.className = 'message-ball producer-ball';
+                    document.body.appendChild(newDot);
+                    newDot.style.left = (brokerRect.left + brokerRect.width/2 - 10) + 'px';
+                    newDot.style.top = (brokerRect.top + brokerRect.height/2 - 10) + 'px';
+                    newDot.style.opacity = 1;
+                    
+                    // Animate to partition
+                    setTimeout(() => {
+                        newDot.style.setProperty('--targetX', (partitionRect.left - brokerRect.left) + 'px');
+                        newDot.style.setProperty('--targetY', (partitionRect.top - brokerRect.top) + 'px');
+                        newDot.classList.add('flying-message');
+                        
+                        addLogEntry('kafka', `Message added to ${topicName}, Partition ${partitionIndex}`);
+                        
+                        // Add message to partition
+                        setTimeout(() => {
+                            const Messages = partition.querySelector('.messages');
+                            messages.insertBefore(messageElement, messages.firstChild);
+                            
+                            // Update offset line
+                            const offsetLine = partition.querySelector('.offset-line');
+                            const messages = partition.querySelectorAll('.message');
+                            if (messages.length > 0) {
+                                // Adjust offset line to be at top of oldest unconsumed message
+                                const percentage = Math.max(25, Math.min(90, 100 - (messages.length * 20)));
+                                offsetLine.style.top = `${percentage}%`;
+                            }
+                            
+                            // Remove the animation dot
+                            document.body.removeChild(newDot);
+                        }, 1000);
+                    }, 100);
+                }, 1000);
+            }, 100);
+            
+            // Pulse the producer
+            producer.classList.add('pulse');
+            setTimeout(() => {
+                producer.classList.remove('pulse');
+            }, 1500);
+        }
+        
+        // Function to consume a message
+        function consumeMessage() {
+            // Pick a topic/partition that has messages
+            const partitions = Array.from(document.querySelectorAll('.partition'));
+            const partitionsWithMessages = partitions.filter(p => 
+                p.querySelector('.messages').children.length > 0
+            );
+            
+            if (partitionsWithMessages.length === 0) {
+                addLogEntry('consumer', 'No messages available to consume');
+                return;
+            }
+            
+            // Randomly select a partition with messages
+            const randomPartition = partitionsWithMessages[Math.floor(Math.random() * partitionsWithMessages.length)];
+            const partitionId = randomPartition.id;
+            
+            // Determine if it's a weather or shopping message
+            const isWeather = partitionId.startsWith('weather');
+            const consumerId = isWeather ? 'consumer1' : 'consumer2';
+            const consumer = document.getElementById(consumerId);
+            
+            // Get the oldest message (last child)
+            const messagesContainer = randomPartition.querySelector('.messages');
+            const message = messagesContainer.lastElementChild;
+            
+            if (!message) return; // Safety check
+            
+            const messageRect = message.getBoundingClientRect();
+            const messageContent = message.querySelector('.message-content').textContent;
+            
+            // Create animation dot
+            const dot = document.createElement('div');
+            dot.className = 'message-ball consumer-ball';
+            document.body.appendChild(dot);
+            
+            // Position at message
+            dot.style.left = (messageRect.left + messageRect.width/2 - 10) + 'px';
+            dot.style.top = (messageRect.top + messageRect.height/2 - 10) + 'px';
+            dot.style.opacity = 1;
+            
+            // Get consumer position
+            const consumerRect = consumer.getBoundingClientRect();
+            
+            // Animate to consumer
+            setTimeout(() => {
+                dot.style.setProperty('--targetX', (consumerRect.left - messageRect.left) + 'px');
+                dot.style.setProperty('--targetY', (consumerRect.top - messageRect.top) + 'px');
+                dot.classList.add('flying-message');
+                
+                addLogEntry('consumer', `${isWeather ? 'Weather Dashboard' : 'Shopping Analytics'} consumed: "${messageContent}"`);
+                
+                // Remove message and dot after animation
+                setTimeout(() => {
+                    messagesContainer.removeChild(message);
+                    document.body.removeChild(dot);
+                    
+                    // Update offset line
+                    const offsetLine = randomPartition.querySelector('.offset-line');
+                    const messages = randomPartition.querySelectorAll('.message');
+                    if (messages.length > 0) {
+                        // Adjust offset line based on remaining messages
+                        const percentage = Math.max(25, Math.min(90, 100 - (messages.length * 20)));
+                        offsetLine.style.top = `${percentage}%`;
+                    } else {
+                        // Reset to default position
+                        offsetLine.style.top = '25%';
+                    }
+                    
+                    // Pulse the consumer
+                    consumer.classList.add('pulse');
+                    setTimeout(() => {
+                        consumer.classList.remove('pulse');
+                    }, 1500);
+                }, 1000);
+            }, 100);
+        }
+        
+        // Function to process a stream
+        function processStream() {
+            // Find a weather message to process
+            const weatherPartitions = document.querySelectorAll('[id^="weather-partition-"]');
+            const partitionsWithMessages = Array.from(weatherPartitions).filter(p => 
+                p.querySelector('.messages').children.length > 0
+            );
+            
+            if (partitionsWithMessages.length === 0) {
+                addLogEntry('streams', 'No weather data to process in the stream');
+                return;
+            }
+            
+            // Select a random partition with weather data
+            const randomPartition = partitionsWithMessages[Math.floor(Math.random() * partitionsWithMessages.length)];
+            const messagesContainer = randomPartition.querySelector('.messages');
+            const message = messagesContainer.firstElementChild; // Get newest message
+            
+            if (!message) return; // Safety check
+            
+            const messageRect = message.getBoundingClientRect();
+            const messageContent = message.querySelector('.message-content').textContent;
+            
+            // Extract temperature from message (assuming format like "Sunny, 75°F")
+            const tempMatch = messageContent.match(/(\d+)°F/);
+            if (!tempMatch) return;
+            
+            const tempF = parseInt(tempMatch[1], 10);
+            const tempC = Math.round((tempF - 32) * 5 / 9);
+            const condition = messageContent.split(',')[0];
+            
+            const streamProcessor = document.getElementById('stream-processor');
+            const streamProcessorRect = streamProcessor.getBoundingClientRect();
+            
+            // Create animation dot
+            const dot = document.createElement('div');
+            dot.className = 'message-ball';
+            dot.style.backgroundColor = '#7e57c2';
+            document.body.appendChild(dot);
+            
+            // Position at message
+            dot.style.left = (messageRect.left + messageRect.width/2 - 10) + 'px';
+            dot.style.top = (messageRect.top + messageRect.height/2 - 10) + 'px';
+            dot.style.opacity = 1;
+            
+            addLogEntry('streams', `Stream processor reading: "${messageContent}"`);
+            
+            // Animate to stream processor
+            setTimeout(() => {
+                dot.style.setProperty('--targetX', (streamProcessorRect.left - messageRect.left) + 'px');
+                dot.style.setProperty('--targetY', (streamProcessorRect.top - messageRect.top) + 'px');
+                dot.classList.add('flying-message');
+                
+                // Process data in stream processor
+                setTimeout(() => {
+                    // Highlight the stream processor
+                    streamProcessor.classList.add('pulse');
+                    
+                    addLogEntry('streams', `Converting ${tempF}°F to ${tempC}°C`);
+                    
+                    // Create a new message with converted temperature
+                    const newMessageContent = `${condition}, ${tempC}°C`;
+                    
+                    // Position dot at stream processor for next animation
+                    document.body.removeChild(dot);
+                    const newDot = document.createElement('div');
+                    newDot.className = 'message-ball';
+                    newDot.style.backgroundColor = '#7e57c2';
+                    document.body.appendChild(newDot);
+                    newDot.style.left = (streamProcessorRect.left + streamProcessorRect.width/2 - 10) + 'px';
+                    newDot.style.top = (streamProcessorRect.top + streamProcessorRect.height/2 - 10) + 'px';
+                    newDot.style.opacity = 1;
+                    
+                    // Get output topic position (rightmost topic in the stream diagram)
+                    const outputTopic = document.querySelector('.streams-diagram .stream-topic:last-child');
+                    const outputTopicRect = outputTopic.getBoundingClientRect();
+                    
+                    // Animate to output topic
+                    setTimeout(() => {
+                        streamProcessor.classList.remove('pulse');
+                        newDot.style.setProperty('--targetX', (outputTopicRect.left - streamProcessorRect.left) + 'px');
+                        newDot.style.setProperty('--targetY', (outputTopicRect.top - streamProcessorRect.top) + 'px');
+                        newDot.classList.add('flying-message');
+                        
+                        addLogEntry('streams', `Stream processor output: "${newMessageContent}" to Converted Weather topic`);
+                        
+                        // Remove animation dot after reaching output topic
+                        setTimeout(() => {
+                            document.body.removeChild(newDot);
+                            
+                            // Highlight output topic
+                            outputTopic.classList.add('pulse');
+                            setTimeout(() => {
+                                outputTopic.classList.remove('pulse');
+                            }, 1500);
+                        }, 1000);
+                    }, 1000);
+                }, 1000);
+            }, 100);
+        }
+        
+        // Function to reset the demo
+        function resetDemo() {
+            // Clear all messages from partitions
+            document.querySelectorAll('.partition .messages').forEach(messagesContainer => {
+                messagesContainer.innerHTML = '';
+            });
+            
+            // Reset offset lines
+            document.querySelectorAll('.offset-line').forEach(line => {
+                line.style.top = '25%';
+            });
+            
+            // Clear log
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerHTML = '';
+            addLogEntry('kafka', 'Kafka system reset. Ready for messages.');
+            
+            // Add some initial messages
+            const initialMessages = [
+                { partition: 'weather-partition-0', content: 'Sunny, 75°F', timestamp: '10:22:15' },
+                { partition: 'weather-partition-0', content: 'Cloudy, 65°F', timestamp: '10:22:10' },
+                { partition: 'weather-partition-1', content: 'Rainy, 60°F', timestamp: '10:22:08' },
+                { partition: 'weather-partition-2', content: 'Snowy, 30°F', timestamp: '10:22:00' },
+                { partition: 'shopping-partition-0', content: 'Added item: Apples', timestamp: '10:21:45' },
+                { partition: 'shopping-partition-1', content: 'Added item: Milk', timestamp: '10:21:30' },
+                { partition: 'shopping-partition-1', content: 'Added item: Cookies', timestamp: '10:21:15' },
+                { partition: 'shopping-partition-2', content: 'Added item: Toys', timestamp: '10:21:00' }
+            ];
+            
+            initialMessages.forEach(msg => {
+                const partition = document.getElementById(msg.partition);
+                const messagesContainer = partition.querySelector('.messages');
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                
+                const contentElement = document.createElement('div');
+                contentElement.className = 'message-content';
+                contentElement.textContent = msg.content;
+                
+                const timestampElement = document.createElement('div');
+                timestampElement.className = 'message-timestamp';
+                timestampElement.textContent = msg.timestamp;
+                
+                messageElement.appendChild(contentElement);
+                messageElement.appendChild(timestampElement);
+                messagesContainer.appendChild(messageElement);
+            });
+        }
+    </script>
+</body>
+</html>
